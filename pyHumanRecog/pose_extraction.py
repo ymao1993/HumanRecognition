@@ -22,6 +22,8 @@ person_pkl_file = 'models/CPM/_trained_person_MPI/params.pkl'
 pose_pkl_file = 'models/CPM/_trained_MPI/params.pkl'
 fname = 'test.jpg'
 
+
+
 def detect_objects_heatmap(heatmap):
   data = 256 * heatmap
   data_max = filters.maximum_filter(data, 3)
@@ -82,10 +84,15 @@ pose_params = pickle.load(open(pose_pkl_file))
 
 
 def tf_init_weights(root_scope, params_dict):
+    """
+    initialize the weights of the current graph
+    :param root_scope:
+    :param params_dict:
+    :return:
+    """
     names_to_values = {}
     for scope, weights in params_dict.iteritems():
-        variables = tf.get_collection(tf.GraphKeys.VARIABLES,
-                                      '%s/%s' % (root_scope, scope))
+        variables = tf.get_collection(tf.GraphKeys.VARIABLES, '%s/%s' % (root_scope, scope))
         assert len(weights) == len(variables)
         for v, w in zip(variables, weights):
             names_to_values[v.name] = w
@@ -95,14 +102,14 @@ def tf_init_weights(root_scope, params_dict):
 tf.reset_default_graph()
 
 with tf.variable_scope('CPM'):
-    # input dims for the person network
+    # building and initializing person graph
     PH, PW = 376, 656
     image_in = tf.placeholder(tf.float32, [1, PH, PW, 3])
     heatmap_person = cpm.inference_person(image_in)
     heatmap_person_large = tf.image.resize_images(heatmap_person, [PH, PW])
     init_person_op, init_person_feed = tf_init_weights('CPM/PersonNet', person_params)
 
-    # input dims for the pose network
+    # building and initializing pose graph
     N, H, W = 16, 376, 376
     pose_image_in = tf.placeholder(tf.float32, [N, H, W, 3])
     pose_centermap_in = tf.placeholder(tf.float32, [N, H, W, 1])
@@ -114,21 +121,30 @@ image = skimage.transform.resize(image, [PH, PW], preserve_range=True).astype(np
 
 with tf.Session() as sess:
     sess.run(init_person_op, init_person_feed)
-    b_image = image[np.newaxis] / 255.0 - 0.5
+    b_image = image[np.newaxis] / 255.0 - 0.5   # normalizing and centering
     hmap_person = sess.run(heatmap_person_large, {image_in: b_image})
 
-# TODO: make this in tf as well?
 hmap_person = np.squeeze(hmap_person)
 centers = detect_objects_heatmap(hmap_person)
 b_pose_image, b_pose_cmap = prepare_input_posenet(b_image[0], centers, [PH, PW], [H, W])
 
+
+# output all pose images
+pose_image, pose_cmap = prepare_input_posenet(image.astype(np.float32), centers, [PH, PW], [H, W])
+pose_image = pose_image.astype(np.uint8)
+for i in range(len(centers)):
+    skimage.io.imsave('pose_image_{0}.png'.format(i), pose_image[i])
+    skimage.io.imsave('pose_cmap_{0}.png'.format(i), pose_cmap[i])
+
+
 with tf.Session() as sess:
     sess.run(init_pose_op, init_pose_feed)
-    feed_dict = { pose_image_in: b_pose_image,
-                  pose_centermap_in: b_pose_cmap }
+    feed_dict = {pose_image_in: b_pose_image,
+                 pose_centermap_in: b_pose_cmap}
     _hmap_pose = sess.run(heatmap_pose, feed_dict)
 
 
 parts = detect_parts_heatmaps(_hmap_pose, centers, [H, W])
 draw_limbs(image, parts)
-plt.imshow(image)
+
+skimage.io.imsave('pose.png', image)

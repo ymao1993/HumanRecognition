@@ -12,12 +12,30 @@ SUBSET_TEST = 3
 
 class HumanDetection:
     def __init__(self, head_bbox, identity_id):
-        self.head_bbox = head_bbox
+        self.head_bbox = [int(item) for item in head_bbox]
         self.identity_id = identity_id
-        self.generate_body_bbox()
 
-    def generate_body_bbox(self):
-        pass
+    def scale(self, h_scale, w_scale):
+        self.head_bbox[0] = int(self.head_bbox[0] * w_scale)
+        self.head_bbox[1] = int(self.head_bbox[1] * h_scale)
+        self.head_bbox[2] = int(self.head_bbox[2] * w_scale)
+        self.head_bbox[3] = int(self.head_bbox[3] * h_scale)
+
+    def get_head_center(self):
+        x = int(self.head_bbox[0] + self.head_bbox[2]//2)
+        y = int(self.head_bbox[1] + self.head_bbox[3]//2)
+        return y, x
+
+    def get_estimated_human_center(self):
+        """ estimating human center
+        """
+        w = self.head_bbox[2]
+        h = self.head_bbox[3]
+        l = min(w, h)
+        hy, hx = self.get_head_center()
+        x = hx
+        y = hy + 2 * l
+        return y, x
 
 
 class Photo:
@@ -68,18 +86,21 @@ class Manager:
             ymin = float(fields[3])
             width = float(fields[4])
             height = float(fields[5])
-            bbox = (xmin, ymin, width, height)
+            bbox = [xmin, ymin, width, height]
             photo.add_human_detection(bbox, fields[6])
         self.photos = np.array(photos)
 
+    def get_photos(self):
+        return self.photos.copy()
+
     def get_training_photos(self):
-        return self.photos[self.split_indices[0]]
+        return self.photos[self.split_indices[0]].copy()
 
     def get_validation_photo(self):
-        return self.photos[self.split_indices[1]]
+        return self.photos[self.split_indices[1]].copy()
 
     def get_testing_photos(self):
-        return self.photos[self.split_indices[2]]
+        return self.photos[self.split_indices[2]].copy()
 
     def get_photo_path(self, subset_id, album_id, photo_id):
         if subset_id == SUBSET_LEFT:

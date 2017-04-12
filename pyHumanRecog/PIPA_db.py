@@ -3,8 +3,8 @@
 
 import os
 import numpy as np
-from head_extraction import head_extraction_top
-import config
+#from head_extraction import head_extraction_top
+#import config
 SUBSET_LEFT = 0
 SUBSET_TRAIN = 1
 SUBSET_VAL = 2
@@ -127,6 +127,6 @@ if __name__ == '__main__':
     print(len(testing_photos))
 
     #extract and align head
-    head_extraction_top(training_photos, config.dlibFacePredictor, config.imgDim)
-    head_extraction_top(validation_photos, config.dlibFacePredictor, config.imgDim)
-    head_extraction_top(testing_photos, config.dlibFacePredictor, config.imgDim)        
+    #head_extraction_top(training_photos, config.dlibFacePredictor, config.imgDim)
+    #head_extraction_top(validation_photos, config.dlibFacePredictor, config.imgDim)
+    #head_extraction_top(testing_photos, config.dlibFacePredictor, config.imgDim)        

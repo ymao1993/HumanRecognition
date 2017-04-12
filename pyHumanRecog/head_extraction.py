@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import skimage.io
 import skimage.transform
@@ -6,19 +7,24 @@ import openface.helper
 from openface.data import iterImgs
 import dlib
 import cv2
+from PIPA_db import HumanDetection
+from PIPA_db import Photo
+from PIPA_db import Manager
+import config
 
-def head_extraction_top(photos, dlibFacePredictor, imgDim):
+def head_extraction_top(photos, dlibFacePredictor, imgDim, head_dir):
 	align = openface.AlignDlib(dlibFacePredictor)
-	
+
+
 	for photo in photos:
 		image = skimage.io.imread(photo.file_path)
 		head_index = 0
 		for head_id in photo.human_detections:
-			align_head(photo, image, head_id, align, head_index, imgDim)
+			align_head(photo, image, head_id, align, head_index, imgDim, head_dir)
 			head_index += 1
 
 
-def align_head(photo, image, head_id, align, head_index, imgDim):
+def align_head(photo, image, head_id, align, head_index, imgDim, head_dir):
 	#crop head position
 	xmin = int(head_id.head_bbox[0])
 	ymin = int(head_id.head_bbox[1])
@@ -60,16 +66,46 @@ def align_head(photo, image, head_id, align, head_index, imgDim):
 	new_y_up = (y_up+y_down)/2  - length/2
 	new_y_down = (y_up+y_down)/2  + length/2	
 
+	if (new_y_up >= new_y_down) or (new_x_left >= new_x_right):
+		return
+
 	#save head image
-	#head_image = image[new_y_up:new_y_down, new_x_left:new_x_right]
-	#head_file = head_path + photo.album_id + '_' + photo.photo_id + '_head_' + str(head_index) + '.jpg'
-	#skimage.io.imsave(head_file, head_image)
+	if config.save_head_image == True:
+		head_image = image[new_y_up:new_y_down, new_x_left:new_x_right]
+		head_file = os.path.join(head_dir,  photo.album_id + '_' + photo.photo_id + '_head_' + str(head_index) + '.jpg')
+		skimage.io.imsave(head_file, head_image)
 
-	dlib_bbox = dlib.rectangle(left=new_x_left, top=new_y_up, right=new_x_right, bottom=new_y_down)
-	alignedFace = align.align(imgDim, image, dlib_bbox, landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
-	outBgr = cv2.cvtColor(alignedFace, cv2.COLOR_RGB2BGR)
-	#save aligned head image
-	#align_head_file = head_path + photo.album_id + '_' + photo.photo_id + '_aligned_head_' + str(head_index) + '.jpg'
-	#cv2.imwrite(align_head_file, outBgr)
+	#save aligned head
+	if config.save_aligned_head_image == True:
+		dlib_bbox = dlib.rectangle(left=new_x_left, top=new_y_up, right=new_x_right, bottom=new_y_down)
+		alignedFace = align.align(imgDim, image, dlib_bbox, landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
+		if image.ndim == 3:
+			alignedFace = cv2.cvtColor(alignedFace, cv2.COLOR_RGB2BGR)
+		align_head_file = os.path.join(head_dir,  photo.album_id + '_' + photo.photo_id + '_aligned_head_' + str(head_index) + '.jpg')
+		cv2.imwrite(align_head_file, alignedFace)
 
+if __name__ == '__main__':
+	head_dir = os.path.join(config.head_path, 'head')
 
+	train_head_dir = os.path.join(head_dir, 'train')
+	valid_head_dir = os.path.join(head_dir, 'valid')		
+	test_head_dir = os.path.join(head_dir, 'test')
+
+	if not os.path.exists(head_dir):
+		os.mkdir(head_dir)
+	if not os.path.exists(train_head_dir):	
+		os.mkdir(train_head_dir)
+	if not os.path.exists(valid_head_dir):
+		os.mkdir( valid_head_dir )
+	if not os.path.exists(test_head_dir):	
+		os.mkdir( test_head_dir )
+
+	manager = Manager('PIPA')
+	training_photos = manager.get_training_photos()
+	validation_photos = manager.get_validation_photo()
+	testing_photos = manager.get_testing_photos()
+
+	#extract and align head
+	head_extraction_top(training_photos, config.dlibFacePredictor, config.imgDim, train_head_dir)
+	head_extraction_top(validation_photos, config.dlibFacePredictor, config.imgDim, valid_head_dir)
+	head_extraction_top(testing_photos, config.dlibFacePredictor, config.imgDim, test_head_dir)  

@@ -2,9 +2,9 @@
 """
 
 import os
+
 import numpy as np
-#from head_extraction import head_extraction_top
-#import config
+from PIL import Image
 SUBSET_LEFT = 0
 SUBSET_TRAIN = 1
 SUBSET_VAL = 2
@@ -12,9 +12,10 @@ SUBSET_TEST = 3
 
 
 class HumanDetection:
-    def __init__(self, head_bbox, identity_id):
+    def __init__(self, head_bbox, identity_id, photo):
         self.head_bbox = [int(item) for item in head_bbox]
         self.identity_id = identity_id
+        self.photo = photo
 
     def scale(self, h_scale, w_scale):
         self.head_bbox[0] = int(self.head_bbox[0] * w_scale)
@@ -28,7 +29,7 @@ class HumanDetection:
         return y, x
 
     def get_estimated_human_center(self):
-        """ estimating human center
+        """ estimating human center (used by CPM)
         """
         w = self.head_bbox[2]
         h = self.head_bbox[3]
@@ -38,6 +39,25 @@ class HumanDetection:
         y = hy + 2 * l
         return y, x
 
+    def get_estimated_body_bbox(self):
+        """ estimating body bounding box
+        :return: (x, y, w, h)
+        """
+        w = self.head_bbox[2]
+        hx = int(self.head_bbox[0] + self.head_bbox[2] // 2)
+        x = hx - w
+        y = self.head_bbox[1]
+        w *= 2
+        h = self.head_bbox[3] * 6
+
+        # clip the body bbox within the image
+        x = np.clip(x, 0, self.photo.width)
+        y = np.clip(y, 0, self.photo.height)
+        w = np.clip(w, 0, self.photo.width - x)
+        h = np.clip(h, 0, self.photo.height - y)
+
+        return x, y, w, h
+
 
 class Photo:
     def __init__(self, album_id, photo_id, subset_id, file_path):
@@ -46,9 +66,11 @@ class Photo:
         self.subset_id = subset_id
         self.human_detections = []
         self.file_path = file_path
+        with Image.open(file_path) as img:
+            self.width, self.height = img.size
 
     def add_human_detection(self, bbox, identity_id):
-        self.human_detections.append(HumanDetection(bbox, identity_id))
+        self.human_detections.append(HumanDetection(bbox, identity_id, self))
 
 
 class Manager:
@@ -59,6 +81,31 @@ class Manager:
         self.split_indices = [[], [], []]
         annotation_file = os.path.join(data_folder, 'annotations/index.txt')
         self._parse_annoatations(annotation_file)
+
+    def get_photos(self):
+        return self.photos
+
+    def get_training_photos(self):
+        return self.photos[self.split_indices[0]]
+
+    def get_validation_photo(self):
+        return self.photos[self.split_indices[1]]
+
+    def get_testing_photos(self):
+        return self.photos[self.split_indices[2]]
+
+    def get_photo_path(self, subset_id, album_id, photo_id):
+        if subset_id == SUBSET_LEFT:
+            subset_folder = 'leftover'
+        elif subset_id == SUBSET_TRAIN:
+            subset_folder = 'train'
+        elif subset_id == SUBSET_VAL:
+            subset_folder = 'val'
+        elif subset_id == SUBSET_TEST:
+            subset_folder = 'test'
+        else:
+            raise Exception('invalid subset id')
+        return os.path.join(self.data_folder, subset_folder, album_id + '_' + photo_id + '.jpg')
 
     def _parse_annoatations(self, annotation_file):
         if not os.path.exists(annotation_file):
@@ -91,33 +138,13 @@ class Manager:
             photo.add_human_detection(bbox, fields[6])
         self.photos = np.array(photos)
 
-    def get_photos(self):
-        return self.photos.copy()
-
-    def get_training_photos(self):
-        return self.photos[self.split_indices[0]].copy()
-
-    def get_validation_photo(self):
-        return self.photos[self.split_indices[1]].copy()
-
-    def get_testing_photos(self):
-        return self.photos[self.split_indices[2]].copy()
-
-    def get_photo_path(self, subset_id, album_id, photo_id):
-        if subset_id == SUBSET_LEFT:
-            subset_folder = 'leftover'
-        elif subset_id == SUBSET_TRAIN:
-            subset_folder = 'train'
-        elif subset_id == SUBSET_VAL:
-            subset_folder = 'val'
-        elif subset_id == SUBSET_TEST:
-            subset_folder = 'test'
-        else:
-            raise Exception('invalid subset id')
-        return os.path.join(self.data_folder, subset_folder, album_id + '_' + photo_id + '.jpg')
-
 
 if __name__ == '__main__':
+    # ---- NOTE ----
+    # this function is only used for demonstrating
+    # how to use this module. Do not append your
+    # code here. Thanks!
+    # @ Yu
     manager = Manager('PIPA')
     training_photos = manager.get_training_photos()
     validation_photos = manager.get_validation_photo()
@@ -125,8 +152,3 @@ if __name__ == '__main__':
     print(len(training_photos))
     print(len(validation_photos))
     print(len(testing_photos))
-
-    #extract and align head
-    #head_extraction_top(training_photos, config.dlibFacePredictor, config.imgDim)
-    #head_extraction_top(validation_photos, config.dlibFacePredictor, config.imgDim)
-    #head_extraction_top(testing_photos, config.dlibFacePredictor, config.imgDim)        

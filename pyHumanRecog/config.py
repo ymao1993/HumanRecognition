@@ -13,3 +13,6 @@ save_aligned_head_image = True
 
 #save head image path
 head_path = "PIPA"
+
+#dense_output for coco similarity
+dense_output = True

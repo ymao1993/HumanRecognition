@@ -112,6 +112,8 @@ class Manager:
             raise Exception('annotation file {0} does not exist'.format(annotation_file))
         photos = []
         file = open(annotation_file)
+        identity_str_to_idx = {}
+        identity_idx_to_str = []
         for line in file:
             fields = line.strip().split()
             assert(len(fields) == 8)
@@ -135,7 +137,11 @@ class Manager:
             width = float(fields[4])
             height = float(fields[5])
             bbox = [xmin, ymin, width, height]
-            photo.add_human_detection(bbox, fields[6])
+            identity_str = fields[6]
+            if identity_str not in identity_str_to_idx:
+                identity_str_to_idx[identity_str] = len(identity_idx_to_str)
+                identity_idx_to_str.append(identity_str)
+            photo.add_human_detection(bbox, identity_str_to_idx[identity_str])
         self.photos = np.array(photos)
 
 
@@ -152,3 +158,4 @@ if __name__ == '__main__':
     print(len(training_photos))
     print(len(validation_photos))
     print(len(testing_photos))
+

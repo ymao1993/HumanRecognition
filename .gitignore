@@ -1,3 +1,7 @@
+# logs
+body_log
+body_model
+
 # IDE files
 .idea
 
@@ -5,7 +9,11 @@
 PIPA
 
 # models
-./models/
+models
+
+# OSX shit
+.DS_Store
+._.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

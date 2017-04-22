@@ -1,26 +1,5 @@
 """ Fine-tuning Inception-V3 with COCO loss
 """
-#
-#                       _oo0oo_
-#                      o8888888o
-#                      88" . "88
-#                      (| -_- |)
-#                      0\  =  /0
-#                    ___/`---'\___
-#                  .' \\|     |# '.
-#                 / \\|||  :  |||# \
-#                / _||||| -:- |||||- \
-#               |   | \\\  -  #/ |   |
-#               | \_|  ''\---/''  |_/ |
-#               \  .-\__  '-'  ___/-. /
-#             ___'. .'  /--.--\  `. .'___
-#          ."" '<  `.___\_<|>_/___.' >' "".
-#         | | :  `- \`.;`\ _ /`;.`/ - ` : | |
-#         \  \ `_.   \_ __\ /__ _/   .-` /  /
-#     =====`-.____`.___ \_____/___.-`___.-'=====
-#                       `=---='
-#       Loss will converge quickly and smoothly.
-
 import os
 import sys
 import argparse
@@ -34,6 +13,7 @@ from preprocessing import inception_preprocessing
 slim = tf.contrib.slim
 
 import PIPA_db
+from coco_loss import coco_loss_layer
 
 
 url = 'http://download.tensorflow.org/models/inception_v3_2016_08_28.tar.gz'
@@ -46,6 +26,18 @@ feature_length = 1024
 image_size = inception.inception_v3.default_image_size
 
 
+def densify_label(labels):
+    result = []
+    top_idx = 0
+    labels_to_idx = {}
+    for label in labels:
+        if label not in labels_to_idx:
+            labels_to_idx[label] = top_idx
+            top_idx += 1
+        result.append(labels_to_idx[label])
+    return result
+
+
 def get_minibatch(photos, batch_size):
     raw_img_data = []
     body_bbox = []
@@ -56,6 +48,7 @@ def get_minibatch(photos, batch_size):
         raw_img_data.append(open(photo.file_path, 'rb').read())
         body_bbox.append(detection.get_estimated_body_bbox())
         labels.append(detection.identity_id)
+    labels = densify_label(labels)
     return raw_img_data, body_bbox, labels
 
 
@@ -66,31 +59,29 @@ def download_inception_v3():
         dataset_utils.download_and_uncompress_tarball(url, checkpoints_dir)
 
 
-def coco_loss(feature_vec, labels):
-    """
-    compute coco loss
-    :param feature_vec: Tensor of shape (batch_size, feature_length)
-    :param labels: String Tensor of shape (batch_size,)
-    :return:
-    """
-    # TODO: implement CoCo Loss
-    return tf.reduce_sum(feature_vec)
-
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--max_iteration', type=int, default=10000)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--loss_print_freq', type=int, default=1)
-    parser.add_argument('--summary_dir', type=str, default='./log')
+    parser.add_argument('--summary_dir', type=str, default='./body_log')
+    parser.add_argument('--model_save_dir', type=str, default='./body_model')
+    parser.add_argument('--model_load_dir', type=str, default=None)
+    parser.add_argument('--model_save_freq', type=int, default=1000)
     args = parser.parse_args()
     max_iterations = args.max_iteration
     batch_size = args.batch_size
     loss_print_freq = args.loss_print_freq
     summary_dir = args.summary_dir
+    model_save_dir = args.model_save_dir
+    model_save_freq = args.model_save_freq
+    model_load_dir = args.model_load_dir
+
     if not tf.gfile.Exists(summary_dir):
         tf.gfile.MakeDirs(summary_dir)
+    if not tf.gfile.Exists(model_save_dir):
+        tf.gfile.MkDir(model_save_dir)
 
     # data manager initialization
     print('initializing data manager...')
@@ -131,12 +122,11 @@ if __name__ == '__main__':
         init_fn = slim.assign_from_checkpoint_fn(os.path.join(checkpoints_dir, checkpoint_name),
                                                  slim.get_model_variables(original_variable_namescope))
 
-        net_before_pool = endpoints['Mixed_7c']
-        feature_vec = slim.fully_connected(net_before_pool, feature_length, activation_fn=None)
-        tf_loss = coco_loss(feature_vec, tf_labels)
+        net_before_pool = tf.reshape(endpoints['Mixed_7c'], shape=(batch_size, -1))
+        tf_features = slim.fully_connected(net_before_pool, feature_length, activation_fn=None)
+        tf_loss = coco_loss_layer(tf_features, tf_labels, batch_size)
 
         # optimizer
-        # TODO: keep the training protocol consistent with the paper
         tf_lr = tf.placeholder(dtype=tf.float32, shape=(), name='learning_rate')
         optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
         train = optimizer.minimize(tf_loss)
@@ -149,11 +139,21 @@ if __name__ == '__main__':
         # global init
         init = tf.global_variables_initializer()
 
+        # saver
+        saver = tf.train.Saver()
+
     # model initialization
     print('initializing model...')
     sess = tf.Session(graph=graph)
-    sess.run(init)
-    init_fn(sess)
+
+    if model_load_dir is None:
+        sess.run(init)
+        init_fn(sess)
+    else:
+        model_full_path = os.path.join(model_load_dir, 'model.ckpt')
+        print('restoring model from ' + model_full_path)
+        saver.restore(sess, model_full_path)
+        print('model restored.')
 
     # start training
     print('start training...')
@@ -178,5 +178,11 @@ if __name__ == '__main__':
         # report loss
         if iter % loss_print_freq == 0:
             print('[iter: {0}, epoch: {1}] loss: {2}'.format(iter, epoch, loss))
+
+        # save model
+        if iter % model_save_freq == 0:
+            print('saving model to ' + model_save_dir + '...')
+            saver.save(sess, os.path.join(model_save_dir, 'model.ckpt'))
+            print('model saved.')
 
     print('training finished.')

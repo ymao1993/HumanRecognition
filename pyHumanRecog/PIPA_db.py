@@ -79,6 +79,7 @@ class Manager:
         self.photos = None
         self.photo_id_to_idx = {}
         self.split_indices = [[], [], []]
+        self.num_labels = 0
         annotation_file = os.path.join(data_folder, 'annotations/index.txt')
         self._parse_annoatations(annotation_file)
 
@@ -106,6 +107,9 @@ class Manager:
         else:
             raise Exception('invalid subset id')
         return os.path.join(self.data_folder, subset_folder, album_id + '_' + photo_id + '.jpg')
+
+    def get_num_labels(self):
+        return self.num_labels
 
     def _parse_annoatations(self, annotation_file):
         if not os.path.exists(annotation_file):
@@ -143,6 +147,7 @@ class Manager:
                 identity_idx_to_str.append(identity_str)
             photo.add_human_detection(bbox, identity_str_to_idx[identity_str])
         self.photos = np.array(photos)
+        self.num_labels = len(identity_idx_to_str)
 
 
 if __name__ == '__main__':

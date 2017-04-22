@@ -21,3 +21,14 @@
 
 	*\<pose\_dump\_folder\>*: folder to dump CPM pose positions
 	
++ train body feature extractor
+
+	```
+	mkdir body_model
+	mkdir body_log
+	python pyHumanRecog/train_body_feature_extractor.py --model_save_dir body_model --summary_dir body_log
+	
+	```
+
+
+	

@@ -39,7 +39,7 @@ def coco_loss_layer(features, labels, batch_size):
         tmp2 = tf.log(tf.reduce_sum(tf.multiply(tf.exp(tf.reduce_sum(tf.multiply(centroids, features_lst[i]), axis=1)), label_mask)))
         log_probs.append(tmp2 - tmp1)
     log_probs = tf.stack(log_probs)
-    loss = tf.reduce_sum(log_probs)
+    loss = tf.reduce_mean(log_probs)
     return loss
 
 
@@ -76,7 +76,7 @@ def _coco_loss_ref(features, labels, batch_size):
         tmp1 = np.sum(centroids[labels[i]] * features[i])
         tmp2 = np.log(np.sum(np.exp(np.sum(centroids * features[i], axis=1)) * label_mask))
         loss.append(tmp2 - tmp1)
-    loss = np.sum(np.array(loss))
+    loss = np.mean(np.array(loss))
     return loss
 
 

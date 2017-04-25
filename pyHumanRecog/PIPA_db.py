@@ -5,6 +5,7 @@ import os
 
 import numpy as np
 from PIL import Image
+import cPickle as pickle
 SUBSET_LEFT = 0
 SUBSET_TRAIN = 1
 SUBSET_VAL = 2
@@ -15,6 +16,7 @@ class HumanDetection:
     def __init__(self, head_bbox, identity_id, photo):
         self.head_bbox = [int(item) for item in head_bbox]
         self.identity_id = identity_id
+        self.features = {}
         self.photo = photo
 
     def scale(self, h_scale, w_scale):
@@ -89,11 +91,27 @@ class Manager:
     def get_training_photos(self):
         return self.photos[self.split_indices[0]]
 
-    def get_validation_photo(self):
+    def get_validation_photos(self):
         return self.photos[self.split_indices[1]]
 
     def get_testing_photos(self):
         return self.photos[self.split_indices[2]]
+
+    def get_training_detections(self):
+        return Manager.get_detections_from_photos(self.get_training_photos())
+
+    def get_validation_detections(self):
+        return Manager.get_detections_from_photos(self.get_validation_photos())
+
+    def get_testing_detections(self):
+        return Manager.get_detections_from_photos(self.get_testing_photos())
+
+    @staticmethod
+    def get_detections_from_photos(photos):
+        detections = []
+        for photo in photos:
+            detections.extend(photo.human_detections)
+        return detections
 
     def get_photo_path(self, subset_id, album_id, photo_id):
         if subset_id == SUBSET_LEFT:
@@ -110,6 +128,21 @@ class Manager:
 
     def get_num_labels(self):
         return self.num_labels
+
+    def load_features(self, feature_name, feature_file, subset='test'):
+        assert subset == 'train' or subset == 'val' or subset == 'test', 'invalid subset name'
+        fd = open(feature_file, 'rb')
+        assert(fd)
+        features = pickle.load(fd)
+        if subset == 'train':
+            detections = self.get_training_detections()
+        elif subset == 'val':
+            detections = self.get_validation_detections()
+        else:
+            detections = self.get_testing_detections()
+        assert(len(features) == len(detections))
+        for detection, feature in zip(detections, features):
+            detection.features[feature_name] = feature
 
     def _parse_annoatations(self, annotation_file):
         if not os.path.exists(annotation_file):
@@ -156,11 +189,21 @@ if __name__ == '__main__':
     # how to use this module. Do not append your
     # code here. Thanks!
     # @ Yu
+
+    # basic usage
     manager = Manager('PIPA')
     training_photos = manager.get_training_photos()
-    validation_photos = manager.get_validation_photo()
+    validation_photos = manager.get_validation_photos()
     testing_photos = manager.get_testing_photos()
     print(len(training_photos))
     print(len(validation_photos))
     print(len(testing_photos))
+
+    # feature loading
+    manager.load_features(feature_name = 'body_feature', 
+                          feature_file = 'feat/body.feat', 
+                          subset = 'test')
+    detections = manager.get_testing_detections()
+    for detection in detections:
+        feature = detection.features['body_feature']
 

@@ -16,3 +16,12 @@ head_path = "PIPA"
 
 #dense_output for coco similarity
 dense_output = True
+
+#normalize parameter for calculate similarity
+beta0 = 1.0
+beta1 = 1.0
+
+#weighted of each region
+w0 = 1.0/3
+w1 = 1.0/3
+w2 = 1.0/3

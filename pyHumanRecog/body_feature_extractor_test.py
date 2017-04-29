@@ -9,7 +9,7 @@ import tensorflow as tf
 sys.path.append('./TFext/models/slim')
 slim = tf.contrib.slim
 import PIPA_db
-from body_feature_extractor import build_network
+from body_feature_extractor_common import build_network
 
 
 def batch_iter(photos, batch_size):

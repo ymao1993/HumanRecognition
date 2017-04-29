@@ -203,9 +203,9 @@ if __name__ == '__main__':
     print(len(testing_photos))
 
     # feature loading
-    manager.load_features(feature_name = 'body_feature', 
-                          feature_file = 'feat/body.feat', 
-                          subset = 'test')
+    manager.load_features(feature_name='body_feature',
+                          feature_file='feat/body.feat',
+                          subset='test')
     detections = manager.get_testing_detections()
     for detection in detections:
         feature = detection.features['body_feature']

@@ -5,8 +5,8 @@ import argparse
 import random
 import tensorflow as tf
 import PIPA_db
-from body_feature_extractor import build_network
-from body_feature_extractor import download_pretrained_model
+from body_feature_extractor_common import build_network
+from body_feature_extractor_common import download_pretrained_model
 
 
 def densify_label(labels):

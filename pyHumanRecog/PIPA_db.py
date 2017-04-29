@@ -68,8 +68,9 @@ class Photo:
         self.subset_id = subset_id
         self.human_detections = []
         self.file_path = file_path
-        with Image.open(file_path) as img:
-            self.width, self.height = img.size
+        #with Image.open(file_path) as img:
+        img = Image.open(file_path)
+        self.width, self.height = img.size
 
     def add_human_detection(self, bbox, identity_id):
         self.human_detections.append(HumanDetection(bbox, identity_id, self))
@@ -134,6 +135,7 @@ class Manager:
         fd = open(feature_file, 'rb')
         assert(fd)
         features = pickle.load(fd)
+
         if subset == 'train':
             detections = self.get_training_detections()
         elif subset == 'val':
@@ -141,6 +143,7 @@ class Manager:
         else:
             detections = self.get_testing_detections()
         assert(len(features) == len(detections))
+
         for detection, feature in zip(detections, features):
             detection.features[feature_name] = feature
 
@@ -206,4 +209,3 @@ if __name__ == '__main__':
     detections = manager.get_testing_detections()
     for detection in detections:
         feature = detection.features['body_feature']
-

@@ -15,6 +15,12 @@
 	```
 	./scripts/get_models.sh
 	```
+
++ get features (if you don't wish to extract them)
+
+	```
+	./scripts/get_features.sh
+	```
 	
 + extract CPM pose
 

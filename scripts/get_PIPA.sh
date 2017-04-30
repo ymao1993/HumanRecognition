@@ -3,11 +3,11 @@ mkdir -p PIPA
 cd PIPA
 
 # downloading PIPA data
-wget https://people.eecs.berkeley.edu/~nzhang/datasets/annotations.zip
-wget https://people.eecs.berkeley.edu/~nzhang/datasets/pipa_train.tar
-wget https://people.eecs.berkeley.edu/~nzhang/datasets/pipa_val.tar
-wget https://people.eecs.berkeley.edu/~nzhang/datasets/pipa_test.tar
-wget https://people.eecs.berkeley.edu/~nzhang/datasets/pipa_leftover.tar
+wget --no-check-certificate https://people.eecs.berkeley.edu/~nzhang/datasets/annotations.zip
+wget --no-check-certificate https://people.eecs.berkeley.edu/~nzhang/datasets/pipa_train.tar
+wget --no-check-certificate https://people.eecs.berkeley.edu/~nzhang/datasets/pipa_val.tar
+wget --no-check-certificate https://people.eecs.berkeley.edu/~nzhang/datasets/pipa_test.tar
+wget --no-check-certificate https://people.eecs.berkeley.edu/~nzhang/datasets/pipa_leftover.tar
 
 # extracting
 tar -xf pipa_train.tar

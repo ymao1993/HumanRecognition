@@ -1,5 +1,7 @@
 import random
 
+random.seed(0)
+
 # feature configuration
 features = {
 	'body': {'path': 'feat/body.feat', 'weight': 1.0}}

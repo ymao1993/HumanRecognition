@@ -43,7 +43,8 @@ def build_network(batch_size, is_training):
 
     net_before_pool = tf.reshape(endpoints['Mixed_7c'], shape=(batch_size, -1))
     tf_features = slim.fully_connected(net_before_pool, feature_length, activation_fn=None)
-    tf_loss = coco_loss_layer(tf_features, tf_labels, batch_size)
+    tf_features_normalized = tf.nn.l2_normalize(tf_features, dim=1)
+    tf_loss = coco_loss_layer(tf_features_normalized, tf_labels, batch_size)
 
     # optimizer
     tf_lr = tf.placeholder(dtype=tf.float32, shape=(), name='learning_rate')

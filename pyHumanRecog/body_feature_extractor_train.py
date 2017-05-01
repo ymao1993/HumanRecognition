@@ -3,10 +3,11 @@
 import os
 import argparse
 import random
+import numpy as np
 import tensorflow as tf
 import PIPA_db
-from body_feature_extractor import build_network
-from body_feature_extractor import download_pretrained_model
+from body_feature_extractor_common import build_network
+from body_feature_extractor_common import download_pretrained_model
 
 
 def densify_label(labels):
@@ -75,7 +76,7 @@ if __name__ == '__main__':
     print('building graph...')
     graph = tf.Graph()
     with graph.as_default():
-        input_pack, train_pack, _ = build_network(batch_size=batch_size, is_training=True)
+        input_pack, train_pack, tf_features = build_network(batch_size=batch_size, is_training=True)
         tf_raw_image_data, tf_body_bbox, tf_labels = input_pack
         init_fn, tf_loss, tf_lr, train, summary_op = train_pack
         summary_writer = tf.summary.FileWriter(summary_dir)
@@ -101,11 +102,14 @@ if __name__ == '__main__':
     epoch = 0
     for iter in range(max_iterations):
         raw_img_data, body_bbox, labels = get_minibatch(training_photos, batch_size=batch_size)
-        _, loss, summary = sess.run([train, tf_loss, summary_op], feed_dict={tf_raw_image_data: raw_img_data,
-                                                                             tf_body_bbox: body_bbox,
-                                                                             tf_labels: labels,
-                                                                             tf_lr: lr})
+        _, loss, summary, features = sess.run([train, tf_loss, summary_op, tf_features], feed_dict={tf_raw_image_data: raw_img_data,
+                                                                                          tf_body_bbox: body_bbox,
+                                                                                          tf_labels: labels,
+                                                                                          tf_lr: lr})
         summary_writer.add_summary(summary, global_step=iter)
+
+        if np.isnan(features).any():
+            assert False, 'feature validation check not passed!'
 
         # count epoch
         if iter * batch_size > (epoch+1) * total_detections:

@@ -68,7 +68,6 @@ class Photo:
         self.subset_id = subset_id
         self.human_detections = []
         self.file_path = file_path
-        #with Image.open(file_path) as img:
         img = Image.open(file_path)
         self.width, self.height = img.size
 
@@ -133,8 +132,7 @@ class Manager:
     def load_features(self, feature_name, feature_file, subset='test'):
         assert subset == 'train' or subset == 'val' or subset == 'test', 'invalid subset name'
         fd = open(feature_file, 'rb')
-        assert(fd)
-        features = pickle.load(fd)
+        features = pickle.load(fd).astype(np.float64)
 
         if subset == 'train':
             detections = self.get_training_detections()
@@ -203,9 +201,9 @@ if __name__ == '__main__':
     print(len(testing_photos))
 
     # feature loading
-    manager.load_features(feature_name = 'body_feature', 
-                          feature_file = 'feat/body.feat', 
-                          subset = 'test')
+    manager.load_features(feature_name='body_feature',
+                          feature_file='feat/body.feat',
+                          subset='test')
     detections = manager.get_testing_detections()
     for detection in detections:
         feature = detection.features['body_feature']

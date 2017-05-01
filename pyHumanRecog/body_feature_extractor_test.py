@@ -9,7 +9,7 @@ import tensorflow as tf
 sys.path.append('./TFext/models/slim')
 slim = tf.contrib.slim
 import PIPA_db
-from body_feature_extractor import build_network
+from body_feature_extractor_common import build_network
 
 
 def batch_iter(photos, batch_size):
@@ -25,6 +25,7 @@ def batch_iter(photos, batch_size):
             raw_img_data.append(raw)
             body_bbox.append(detection.get_estimated_body_bbox())
             if count == batch_size:
+                raw_img_data = np.array(raw_img_data)
                 yield raw_img_data, body_bbox, count
                 raw_img_data= []
                 body_bbox = []
@@ -34,6 +35,7 @@ def batch_iter(photos, batch_size):
         for _ in range(batch_size - count):
             raw_img_data.append(raw_img_data[count-1])
             body_bbox.append(body_bbox[count-1])
+        raw_img_data = np.array(raw_img_data)
         yield raw_img_data, body_bbox, count
     return
 
@@ -81,6 +83,9 @@ if __name__ == '__main__':
     for raw_img_data, body_bbox, batch_count in batch_iter(photos, batch_size):
         features = sess.run(tf_features, feed_dict={tf_raw_image_data: raw_img_data,
                                                     tf_body_bbox: body_bbox})
+        tmp = features[0:batch_count]
+        print ('nan of tmp: ' + str(np.sum(np.isnan(tmp).astype(int))))
+
         all_features.extend(features[0:batch_count])
         completed_count += batch_count
 

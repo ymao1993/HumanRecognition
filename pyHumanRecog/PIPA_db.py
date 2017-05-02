@@ -17,6 +17,7 @@ class HumanDetection:
         self.head_bbox = [int(item) for item in head_bbox]
         self.identity_id = identity_id
         self.features = {}
+        self.is_face = None
         self.photo = photo
 
     def scale(self, h_scale, w_scale):
@@ -145,6 +146,34 @@ class Manager:
         for detection, feature in zip(detections, features):
             detection.features[feature_name] = feature
 
+    def load_head_annotation(self, head_annotation_folder):
+        detections = self.get_training_detections()
+        head_annotation_file = os.path.join(head_annotation_folder, 'train_head_annotate.txt')
+        assert(os.path.exists(head_annotation_file))
+        head_annotations = open(head_annotation_file).read().strip().split()
+        head_annotations = [bool(int(annotation)) for annotation in head_annotations]
+        assert(len(detections) == len(head_annotations))
+        for detection, annotation in zip(detections, head_annotations):
+            detection.is_face = annotation
+
+        detections = self.get_validation_detections()
+        head_annotation_file = os.path.join(head_annotation_folder, 'valid_head_annotate.txt')
+        assert(os.path.exists(head_annotation_file))
+        head_annotations = open(head_annotation_file).read().strip().split()
+        head_annotations = [bool(int(annotation)) for annotation in head_annotations]
+        assert(len(detections) == len(head_annotations))
+        for detection, annotation in zip(detections, head_annotations):
+            detection.is_face = annotation
+
+        detections = self.get_testing_detections()
+        head_annotation_file = os.path.join(head_annotation_folder, 'test_head_annotate.txt')
+        assert(os.path.exists(head_annotation_file))
+        head_annotations = open(head_annotation_file).read().strip().split()
+        head_annotations = [bool(int(annotation)) for annotation in head_annotations]
+        assert(len(detections) == len(head_annotations))
+        for detection, annotation in zip(detections, head_annotations):
+            detection.is_face = annotation
+
     def _parse_annoatations(self, annotation_file):
         if not os.path.exists(annotation_file):
             raise Exception('annotation file {0} does not exist'.format(annotation_file))
@@ -204,6 +233,30 @@ if __name__ == '__main__':
     manager.load_features(feature_name='body_feature',
                           feature_file='feat/body.feat',
                           subset='test')
-    detections = manager.get_testing_detections()
-    for detection in detections:
-        feature = detection.features['body_feature']
+
+    # head annotation loading
+    manager.load_head_annotation('head_annotation')
+
+    # statistics on head annotation
+    training_detections = manager.get_training_detections()
+    validation_detections = manager.get_validation_detections()
+    testing_detections = manager.get_testing_detections()
+    
+    count = 0
+    for i in range(len(training_detections)):
+        if training_detections[i].is_face:
+            count += 1
+    print('training set: {0}/{1} faces'.format(count, len(training_detections)))
+
+    count = 0
+    for i in range(len(validation_detections)):
+        if validation_detections[i].is_face:
+            count += 1
+    print('validation set: {0}/{1} faces'.format(count, len(validation_detections)))
+
+    count = 0
+    for i in range(len(testing_detections)):
+        if testing_detections[i].is_face:
+            count += 1
+    print('testing set: {0}/{1} faces'.format(count, len(testing_detections)))
+

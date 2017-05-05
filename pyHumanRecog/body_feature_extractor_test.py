@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--model_load_dir', type=str, default='body_model')
+    parser.add_argument('--model_load_dir', type=str, default='models/body_model')
     parser.add_argument('--feature_dump_path', type=str, default='feat/body.feat')
     args = parser.parse_args()
     batch_size = args.batch_size

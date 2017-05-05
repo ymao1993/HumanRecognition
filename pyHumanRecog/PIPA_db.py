@@ -31,6 +31,14 @@ class HumanDetection:
         y = int(self.head_bbox[1] + self.head_bbox[3]//2)
         return y, x
 
+    def get_clipped_bbox(self):
+        bbox = self.head_bbox
+        bbox[0] = np.clip(bbox[0], 0, self.photo.width)
+        bbox[1] = np.clip(bbox[1], 0, self.photo.height)
+        bbox[2] = np.clip(bbox[2], 0, self.photo.width - bbox[0])
+        bbox[3] = np.clip(bbox[3], 0, self.photo.height - bbox[1])
+        return bbox
+
     def get_estimated_human_center(self):
         """ estimating human center (used by CPM)
         """

@@ -43,7 +43,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--loss_print_freq', type=int, default=1)
     parser.add_argument('--summary_dir', type=str, default='./body_log')
-    parser.add_argument('--model_save_dir', type=str, default='./body_model')
+    parser.add_argument('--model_save_dir', type=str, default='models//body_model')
     parser.add_argument('--model_load_dir', type=str, default=None)
     parser.add_argument('--model_save_freq', type=int, default=1000)
     args = parser.parse_args()

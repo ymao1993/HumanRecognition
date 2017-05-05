@@ -21,21 +21,20 @@
 	```
 	./scripts/get_features.sh
 	```
-	
-+ extract CPM pose
+
+### Face Feature
+
+We use [FaceNet](https://arxiv.org/abs/1503.03832) for face feature extraction. FaceNet is a CNN trained to directly optimize the embedding itself.
+
++ test face feature extractor
 
 	```
-	python pyHumanRecog/extract_pose.py <img_dump_folder> <pose_dump_folder>
+	python pyHumanRecog/face_feature_extractor_test.py
 	```
-	`<image_dump_folder>`: folder to dump CPM pose visualization images
-
-	`<pose_dump_folder>`: folder to dump CPM pose positions
 
 ### Body Feature 
 
-+ train body feature extractor
-
-	(feel free to increase the batch\_size for better performance)
++ train body feature extractor (feel free to experiment with different batch size)
 	
 	```
 	python pyHumanRecog/body_feature_extractor_train.py --batch_size 32
@@ -46,6 +45,19 @@
 	```
 	python pyHumanRecog/body_feature_extractor_test.py --batch_size 32
 	```
+	
+### Pose estimation
+
+We use CPM for pose estimation. The estimated CPM pose will mainly be used for image warping.
+
++ CPM pose estimation
+	
+	```
+	python pyHumanRecog/extract_pose.py <img_dump_folder> <pose_dump_folder>
+	```
+	`<image_dump_folder>`: folder to dump CPM pose visualization images
+
+	`<pose_dump_folder>`: folder to dump CPM pose positions
 
 ### Evaluation
 
@@ -58,10 +70,11 @@ python pyHumanRecog/performance_test.py
 	
 ## Current Performance
 
-**Last Updated: 04/29/2017**
+**Last Updated: 05/05/2017**
 
 ```
-total accuracy: 1.48%
-accuracy with body: 1.48%
+fused model accuracy: 62.11%
+accuracy with only body features: 1.48%
+accuracy with only face features: 61.90%
 accuracy by chance: 0.17%
 ```

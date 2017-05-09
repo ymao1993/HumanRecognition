@@ -105,7 +105,6 @@ def evaluate_accuracy_with_predicts(test_0, test_1, predicts_0, predicts_1):
     return accuracy
 
 
-
 def evaluate_accuracy_with_inst_similarity(test_0, test_1, similarity):
     identity_set_0 = get_identity_set(test_0)
     identity_set_1 = get_identity_set(test_1)

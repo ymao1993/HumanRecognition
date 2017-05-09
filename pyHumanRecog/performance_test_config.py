@@ -9,9 +9,10 @@ features = \
     'body': {'path': 'feat/body.feat', 'weight': 1.0, 'similarity_metric': 'cosine'}
 }
 
-# K in KNN in prediction
-K = 1
-
 # normalization parameter for calculating similarity
 beta0 = 0.0
 beta1 = 1.0
+
+# whether to refine the result with photo-level co-occurrence pattern via Loopy Belief Propagation(LBP)
+refine_with_photo_level_context = True
+

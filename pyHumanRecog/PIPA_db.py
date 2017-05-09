@@ -69,6 +69,25 @@ class HumanDetection:
 
         return x, y, w, h
 
+    def get_estimated_upper_body_bbox(self):
+        """ estimating body bounding box
+        :return: (x, y, w, h)
+        """
+        w = self.head_bbox[2]
+        hx = int(self.head_bbox[0] + self.head_bbox[2] // 2)
+        x = hx - w
+        y = self.head_bbox[1]
+        w *= 2
+        h = self.head_bbox[3] * 3
+
+        # clip the body bbox within the image
+        x = np.clip(x, 0, self.photo.width)
+        y = np.clip(y, 0, self.photo.height)
+        w = np.clip(w, 0, self.photo.width - x)
+        h = np.clip(h, 0, self.photo.height - y)
+
+        return x, y, w, h
+
 
 class Photo:
     def __init__(self, album_id, photo_id, subset_id, file_path):
@@ -90,7 +109,12 @@ class Manager:
         self.photos = None
         self.photo_id_to_idx = {}
         self.split_indices = [[], [], []]
+        self.label_map_subset_to_global = [[], [], []]
+        self.label_map_global_to_subset = [{}, {}, {}]
         self.num_labels = 0
+        self.num_labels_train = None
+        self.num_labels_val = None
+        self.num_labels_test = None
         annotation_file = os.path.join(data_folder, 'annotations/index.txt')
         self._parse_annoatations(annotation_file)
 
@@ -137,6 +161,33 @@ class Manager:
 
     def get_num_labels(self):
         return self.num_labels
+
+    def get_num_labels_training(self):
+        return len(self.label_map_subset_to_global[0])
+
+    def get_num_labels_validation(self):
+        return len(self.label_map_subset_to_global[1])
+
+    def get_num_labels_testing(self):
+        return len(self.label_map_subset_to_global[2])
+
+    def get_label_mapping_global_to_train(self):
+        return self.label_map_global_to_subset[0]
+
+    def get_label_mapping_train_to_global(self):
+        return self.label_map_subset_to_global[0]
+
+    def get_label_mapping_global_to_val(self):
+        return self.label_map_global_to_subset[1]
+
+    def get_label_mapping_val_to_global(self):
+        return self.label_map_subset_to_global[1]
+
+    def get_label_mapping_global_to_test(self):
+        return self.label_map_global_to_subset[2]
+
+    def get_label_mapping_test_to_global(self):
+        return self.label_map_subset_to_global[2]
 
     def load_features(self, feature_name, feature_file, subset='test'):
         assert subset == 'train' or subset == 'val' or subset == 'test', 'invalid subset name'
@@ -214,9 +265,15 @@ class Manager:
             bbox = [xmin, ymin, width, height]
             identity_str = fields[6]
             if identity_str not in identity_str_to_idx:
-                identity_str_to_idx[identity_str] = len(identity_idx_to_str)
+                global_idx = len(identity_idx_to_str)
+                identity_str_to_idx[identity_str] = global_idx
                 identity_idx_to_str.append(identity_str)
+
+                subset_idx = len(self.label_map_subset_to_global[subset_id - 1])
+                self.label_map_global_to_subset[subset_id - 1][global_idx] = subset_idx
+                self.label_map_subset_to_global[subset_id - 1].append(global_idx)
             photo.add_human_detection(bbox, identity_str_to_idx[identity_str])
+
         self.photos = np.array(photos)
         self.num_labels = len(identity_idx_to_str)
 

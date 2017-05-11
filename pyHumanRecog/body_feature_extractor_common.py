@@ -9,10 +9,11 @@ from coco_loss import coco_loss_layer
 slim = tf.contrib.slim
 
 url = 'http://download.tensorflow.org/models/inception_v3_2016_08_28.tar.gz'
-checkpoints_dir = '/home/mscvproject/users/yumao/humanRecog/yumao/pretrained_model'
-checkpoint_name = 'inception_v3.ckpt'
+checkpoints_dir = '/home/ilim/tiffany/11775_project/yumao/HumanRecognition/pretrained_model_body'
+checkpoint_name = 'model.ckpt-136059'
 original_variable_namescope = 'InceptionV3'
 feature_length = 1024
+num_identity = 1409
 image_size = inception.inception_v3.default_image_size
 
 
@@ -35,14 +36,15 @@ def build_network(batch_size, is_training):
 
     # training pipeline
     with slim.arg_scope(inception.inception_v3_arg_scope()):
-        _, endpoints = inception.inception_v3(processed_images, num_classes=1001, is_training=is_training)
+        _, endpoints = inception.inception_v3(processed_images, num_classes=num_identity, is_training=is_training)
 
     # load model parameters
     init_fn = slim.assign_from_checkpoint_fn(os.path.join(checkpoints_dir, checkpoint_name),
                                              slim.get_model_variables(original_variable_namescope))
 
     net_before_pool = tf.reshape(endpoints['Mixed_7c'], shape=(batch_size, -1))
-    tf_features = slim.fully_connected(net_before_pool, feature_length, activation_fn=None)
+    net_before_pool_frozen = tf.stop_gradient(net_before_pool)
+    tf_features = slim.fully_connected(net_before_pool_frozen, feature_length, activation_fn=None)
     tf_features_normalized = tf.nn.l2_normalize(tf_features, dim=1)
     tf_loss = coco_loss_layer(tf_features_normalized, tf_labels, batch_size)
 
@@ -59,7 +61,4 @@ def build_network(batch_size, is_training):
 
 
 def download_pretrained_model():
-    if not tf.gfile.Exists(checkpoints_dir):
-        tf.gfile.MakeDirs(checkpoints_dir)
-    if not tf.gfile.Exists(os.path.join(checkpoints_dir, checkpoint_name)):
-        dataset_utils.download_and_uncompress_tarball(url, checkpoints_dir)
+    pass

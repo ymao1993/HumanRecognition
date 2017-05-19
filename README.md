@@ -1,5 +1,18 @@
 # HumanRecognition
 
+The system is develped to perform person recognition task on PIPA dataset, the detailed description of the approach of this system can be found [here](https://www.dropbox.com/s/00ioth4scki918f/ProjectReport_11775.pdf?dl=0).
+
+## Performance (Last Updated: 5/19/2017)
+
+|               Config              | Accuracy |
+|:---------------------------------:|:--------:|
+|                Face               |  62.18%  |
+|                Head               |  63.19%  |
+|             Upper-body            |  67.44%  |
+|             Full-body             |  58.96%  |
+|         All modality fused        |  82.31%  |
+| All modality fused + MRF refining |          |
+
 ## Usage
 
 ### Preparation
@@ -32,6 +45,20 @@ We use [FaceNet](https://arxiv.org/abs/1503.03832) for face feature extraction. 
 	python pyHumanRecog/face_feature_extractor_test.py
 	```
 
+### Head Feature 
+
++ train head feature extractor (feel free to experiment with different batch size)
+	
+	```
+	python pyHumanRecog/head_feature_extractor_train.py --batch_size 32
+	```
+	
++ test head feature extractor
+
+	```
+	python pyHumanRecog/head_feature_extractor_test.py --batch_size 32
+	```
+
 ### Body Feature 
 
 + train body feature extractor (feel free to experiment with different batch size)
@@ -44,6 +71,20 @@ We use [FaceNet](https://arxiv.org/abs/1503.03832) for face feature extraction. 
 
 	```
 	python pyHumanRecog/body_feature_extractor_test.py --batch_size 32
+	```
+	
+### Upper-body Feature 
+
++ train upper-body feature extractor (feel free to experiment with different batch size)
+	
+	```
+	python pyHumanRecog/upper_body_feature_extractor_train.py --batch_size 32
+	```
+	
++ test upper-body feature extractor
+
+	```
+	python pyHumanRecog/upper_body_feature_extractor_test.py --batch_size 32
 	```
 	
 ### Pose estimation
@@ -67,14 +108,6 @@ For performance evaluation, Please first modify `performance_test_config.py` (wi
 python pyHumanRecog/performance_test.py
 ```
 
-	
-## Current Performance
+To perform MRF optimization (which incorporates the photo-level cooccurrence and mutual exclusive pattern into the final prediction), Set `refine_with_photo_level_context = False` in `HumanRecog/performance_test_config.py`.
 
-**Last Updated: 05/05/2017**
 
-```
-fused model accuracy: 62.11%
-accuracy with only body features: 1.48%
-accuracy with only face features: 61.90%
-accuracy by chance: 0.17%
-```

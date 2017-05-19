@@ -108,6 +108,6 @@ For performance evaluation, Please first modify `performance_test_config.py` (wi
 python pyHumanRecog/performance_test.py
 ```
 
-To perform MRF optimization (which incorporates the photo-level cooccurrence and mutual exclusive pattern into the final prediction), Set `refine_with_photo_level_context = False` in `HumanRecog/performance_test_config.py`.
+To perform MRF optimization (which incorporates the photo-level cooccurrence and mutual exclusive pattern into the final prediction), Set `refine_with_photo_level_context = True` in `HumanRecog/performance_test_config.py`.
 
 

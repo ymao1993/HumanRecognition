@@ -16,4 +16,4 @@ beta0 = 0.0
 beta1 = 1.0
 
 # whether to refine the result with photo-level co-occurrence pattern via Loopy Belief Propagation(LBP)
-refine_with_photo_level_context = True
+refine_with_photo_level_context = False

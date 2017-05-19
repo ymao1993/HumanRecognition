@@ -6,8 +6,8 @@ import random
 import numpy as np
 import tensorflow as tf
 import PIPA_db
-from body_feature_extractor_common import build_network
-from body_feature_extractor_common import download_pretrained_model
+from head_feature_extractor_common import build_network
+from head_feature_extractor_common import download_pretrained_model
 
 
 def densify_label(labels):
@@ -24,16 +24,18 @@ def densify_label(labels):
 
 def get_minibatch(photos, batch_size):
     raw_img_data = []
-    body_bbox = []
+    head_bbox = []
     labels = []
     while len(raw_img_data) < batch_size:
         photo = photos[random.randrange(0, len(photos))]
         detection = photo.human_detections[random.randrange(0, len(photo.human_detections))]
+        if detection.is_face:  # exclude the front-face detection from training set
+            continue
         raw_img_data.append(open(photo.file_path, 'rb').read())
-        body_bbox.append(detection.get_estimated_body_bbox())
+        head_bbox.append(detection.get_clipped_bbox())
         labels.append(detection.identity_id)
     labels = densify_label(labels)
-    return raw_img_data, body_bbox, labels
+    return raw_img_data, head_bbox, labels
 
 
 if __name__ == '__main__':
@@ -42,8 +44,8 @@ if __name__ == '__main__':
     parser.add_argument('--max_iteration', type=int, default=1000000)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--loss_print_freq', type=int, default=1)
-    parser.add_argument('--summary_dir', type=str, default='./body_log2')
-    parser.add_argument('--model_save_dir', type=str, default='models/body_model2')
+    parser.add_argument('--summary_dir', type=str, default='./head_log')
+    parser.add_argument('--model_save_dir', type=str, default='models/head_model')
     parser.add_argument('--model_load_dir', type=str, default=None)
     parser.add_argument('--model_save_freq', type=int, default=1000)
     args = parser.parse_args()

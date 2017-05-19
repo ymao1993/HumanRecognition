@@ -192,7 +192,7 @@ class Manager:
     def load_features(self, feature_name, feature_file, subset='test'):
         assert subset == 'train' or subset == 'val' or subset == 'test', 'invalid subset name'
         fd = open(feature_file, 'rb')
-        features = pickle.load(fd).astype(np.float64)
+        features = pickle.load(fd)
 
         if subset == 'train':
             detections = self.get_training_detections()
@@ -324,4 +324,8 @@ if __name__ == '__main__':
         if testing_detections[i].is_face:
             count += 1
     print('testing set: {0}/{1} faces'.format(count, len(testing_detections)))
+
+    for photo in manager.get_testing_photos():
+        if len(photo.human_detections) == 0:
+            print('no human detection in {0}'.format(photo.file_path))
 

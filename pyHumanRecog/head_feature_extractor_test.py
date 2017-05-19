@@ -9,12 +9,12 @@ import tensorflow as tf
 sys.path.append('./TFext/models/slim')
 slim = tf.contrib.slim
 import PIPA_db
-from body_feature_extractor_common import build_network
+from head_feature_extractor_common import build_network
 
 
 def batch_iter(photos, batch_size):
     raw_img_data = []
-    body_bbox = []
+    head_bbox = []
     count = 0
     for i in range(len(photos)):
         photo = photos[i]
@@ -23,20 +23,20 @@ def batch_iter(photos, batch_size):
             detection = photo.human_detections[j]
             count += 1
             raw_img_data.append(raw)
-            body_bbox.append(detection.get_estimated_body_bbox())
+            head_bbox.append(detection.get_clipped_bbox())
             if count == batch_size:
                 raw_img_data = np.array(raw_img_data)
-                yield raw_img_data, body_bbox, count
+                yield raw_img_data, head_bbox, count
                 raw_img_data= []
-                body_bbox = []
+                head_bbox = []
                 count = 0
     if count != 0:
         # just repeat the last sample to ensure we are providing a batch with batch_size
         for _ in range(batch_size - count):
             raw_img_data.append(raw_img_data[count-1])
-            body_bbox.append(body_bbox[count-1])
+            head_bbox.append(head_bbox[count-1])
         raw_img_data = np.array(raw_img_data)
-        yield raw_img_data, body_bbox, count
+        yield raw_img_data, head_bbox, count
     return
 
 
@@ -44,8 +44,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--model_load_dir', type=str, default='models/body_model2')
-    parser.add_argument('--feature_dump_path', type=str, default='feat/body2.feat')
+    parser.add_argument('--model_load_dir', type=str, default='models/head_model')
+    parser.add_argument('--feature_dump_path', type=str, default='feat/head.feat')
     args = parser.parse_args()
     batch_size = args.batch_size
     model_load_dir = args.model_load_dir

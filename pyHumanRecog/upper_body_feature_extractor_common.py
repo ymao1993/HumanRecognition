@@ -9,8 +9,8 @@ from coco_loss import coco_loss_layer
 slim = tf.contrib.slim
 
 url = 'http://download.tensorflow.org/models/inception_v3_2016_08_28.tar.gz'
-checkpoints_dir = '/home/mscvproject/users/yumao/humanRecog/HumanRecognition/pretrained_model_body2'
-checkpoint_name = 'model.ckpt-75030'
+checkpoints_dir = '/home/mscvproject/users/yumao/humanRecog/HumanRecognition/pretrained_model_upperbody'
+checkpoint_name = 'model.ckpt-104956'
 original_variable_namescope = 'InceptionV3'
 feature_length = 1024
 num_identity = 1409

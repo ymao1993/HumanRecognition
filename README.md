@@ -11,7 +11,7 @@ The system is develped to perform person recognition task on PIPA dataset, the d
 |             Upper-body            |  67.44%  |
 |             Full-body             |  58.96%  |
 |         All modality fused        |  82.31%  |
-| All modality fused + MRF refining |          |
+| All modality fused + MRF refining |  86.18%  |
 
 ## Usage
 
